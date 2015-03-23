@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TICTACTOE</title>
+  <style>
+body {background-color: black !important}
+table {border:2px solid #EDF7F7;height: 300px;width: 300px;box-shadow: inset 0 0 22px #9EB0CE;}
+td {margin-right: 3px;font-size: 47px;text-align: center;color: black;font-family: monospace;text-shadow: 0 0 3px #9EB0CE, 0 0 5px #FFFFFF;}
+.border {border: 5px double #3A5467;}
+h1 {font-family: monospace;font-size: 52px;color: rgba(24, 101, 111, .9);text-shadow: 0 0 3px #9EB0CE, 0 0 5px #FFFFFF;}
+h2 {font-family: monospace;font-size: 28px;font-variant: small-caps;text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;}
+button {background-color: transparent;font-size: 23px;font-family: monospace;color:white;border:2px double #556C80;}
+.table {height: 90px;width: 420px;}
+.radius {border-radius: 2px;}
+.cell {text-align: center;padding: 5px;height: 100px;width: 300px;border:1px solid #9EB0CE;}
+.player {height: 100px;width: 170px;position: center;float: right;border-radius: 15px;background: rgba(78, 177, 223, .1);}
+
+/*CHAT STUFF*/
+
+#chat {list-style-type: none; margin:0; padding: 0;}
+#chat li { padding:5px 10px; }
+#chat li:nth-child(odd) {background: #5F5F5F}
+#chatbox {height:200px;color:white;}
+li {color:white;}
+#chatWrap {float:left; border:1px solid #6585A2;}
+#contentWrap {display: none;}
+#nickWrap {color:black;}
+#users {float:right; color:white; height:200px; width:140px; list-style-type: none;}
+.overflow {
+    height: 200px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+</style>
+
+<!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
+
+</head>
+<body>
+
+    <th colspan="2">
+      <h1><br><center>TIC-TAC-TOE</center></h1>
+    </th>
+    <div class="player border">
+      <center><h2 class="right"></h2></center>
+    </div>
+  <div class="row">
+    <div class="col-xs-3"></div>
+    <div class="col-xs-6">
+      <div id="board" class="radius border">
+     
+        <table class="table" align="center">
+          <tr id="row" class="table">
+            <td id=1 class="cell"></td>
+            <td id=2 class="cell"></td>
+            <td id=3 class="cell"></td>
+          </tr>
+    
+          <tr id="row" class="table">
+            <td id=4 class="cell"></td>
+            <td id=5 class="cell"></td>
+            <td id=6 class="cell"></td>
+          </tr>
+
+          <tr id="row" class="table">
+            <td id=7 class="cell"></td>
+            <td id=8 class="cell"></td>
+            <td id=9 class="cell"></td>
+          </tr>
+        </table>
+    
+      </div>
+    </div>
+    <div class="col-xs-3"></div>
+  </div>
+   <button id="reset" class="btn btn-md btn-warning">RESET</button>
+
+<!--        CHAT PORTION            -->
+<div class="row">
+  <div class="col-xs-10">
+    <div id="nickWrap" class="border">
+      <p>Enter a username:</p>
+      <p id="nickError"></p>
+
+      <form id="setNick">
+        <input size="35" id="nickname" type="text">
+        <input type="submit" class="btn btn-md btn-success" value="choose name">  
+      </form>
+    </div>
+
+    <div id="contentWrap">
+      <div id="chatbox" class="overflow border">
+        <ul id="chat"></ul>
+      </div>
+      <form id="send-message" action="">
+        <input size="35" id="message" type="text" autofocus required>
+        <input type="submit" class="btn btn-md btn-success">
+      </form>
+    </div>
+  </div>
+
+  <div class="col-xs-2">
+    <h3 class="border">USERS:</h3>
+    <div id="users"></div>
+  </div>
+</div>
+
+<!-- <script src="/socket.io/socket.io.js"></script> -->
+
+<!-- <script>var socket = io();</script> -->
+
+ <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+
+<script>
+$(document).ready(function(){
+  var socket = io();
+  $('#setNick').submit(function(e){
+    e.preventDefault();
+    socket.emit ('new user', $('#nickname').val(), function(data){
+      if(data){
+        $('#nickWrap').hide();
+        $('#contentWrap').show();
+      } else {
+        $('#nickError').html('That username is already taken');
+      }
+    });
+    $('#nickname').val(' ');
+  });
+
+  socket.on('usernames', function(data){
+      var html = '';
+      for (i=0; i < data.length; i++) {
+        html = (data[i]);
+      }
+      $('#users').append($('<li>').text(html));
+  }); 
+
+  $('#send-message').submit(function(e){
+    e.preventDefault();
+    socket.emit('chat message', $('#message').val());
+    $('#message').val('');
+  });
+  socket.on('chat message', function(data){
+    $('#chat').append($('<li>').text(data.nick + " : " + data.msg));
+  });
+  
+// TIC TAC TOE CLIENT SIDE SOCKET CODE
+ ticTacToe = {
+    whoseTurn: "X",
+    changeWhoseTurn: function(){
+      if (this.whoseTurn === "X") {
+        this.whoseTurn = "O";
+      } else {
+        this.whoseTurn = "X";
+      }
+    },
+    findWinner: function(mark){
+      var boxes = $('#board').children( "td" );
+      console.log(boxes);
+          winner  = false;
+      if (boxes[0].innerHTML === mark && boxes[1].innerHTML === mark && boxes[2].innerHTML === mark) {
+        winner = true;
+      } else if (boxes[3].innerHTML === mark && boxes[4].innerHTML === mark && boxes[5].innerHTML === mark) {
+        winner = true;
+      } else if (boxes[6].innerHTML === mark && boxes[7].innerHTML === mark && boxes[8].innerHTML === mark) {
+        winner = true;
+      } else if (boxes[0].innerHTML === mark && boxes[3].innerHTML === mark && boxes[6].innerHTML === mark) {
+        winner = true;
+      } else if (boxes[1].innerHTML === mark && boxes[4].innerHTML === mark && boxes[7].innerHTML === mark) {
+        winner = true;
+      } else if (boxes[2].innerHTML === mark && boxes[5].innerHTML === mark && boxes[8].innerHTML === mark) {
+        winner = true;
+      } else if (boxes[0].innerHTML === mark && boxes[4].innerHTML === mark && boxes[8].innerHTML === mark) {
+        winner = true;
+      } else if (boxes[2].innerHTML === mark && boxes[4].innerHTML === mark && boxes[6].innerHTML === mark) {
+        winner = true;
+      }
+      return winner;
+    }
+  };
+    socket.on('turn played', function(move){
+      var spotPlayed = move.spotPlayed,
+          whoPlayed  = move.whoPlayed;
+        $("#" + spotPlayed).html(whoPlayed);
+        if (ticTacToe.findWinner("X") || ticTacToe.findWinner("O")) {
+          socket.emit("winner", whoPlayed);
+        } else {
+            ticTacToe.changeWhoseTurn();
+        }
+    });
+    $('#board').on("click", "td", function(){
+      $(this).innerHTML(ticTacToe.whoseTurn);
+      socket.emit("turn played", { "whoPlayed": ticTacToe.whoseTurn, "spotPlayed": $(this).attr("id")
+      });
+        if (ticTacToe.findWinner("X") || ticTacToe.findWinner("O")) {
+            socket.emit("winner", ticTacToe.whoseTurn);
+        } else {
+            ticTacToe.changeWhoseTurn();
+        }
+    });
+});
+  
+  
+
+</script>
+
+<script type="text/javascript" src="/javascript/main.js"></script>
+</body>
+</html>
