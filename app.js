@@ -21,7 +21,9 @@ app.get('/', function(req, res){
 
 io.on('connection', function(socket){
   console.log('connected');
-  
+  socket.on('mouseEvent', function(data) {
+    io.emit('mouseEvent', data);
+  });
 
   socket.on('turn played', function(move){
     io.emit('turn played', move);
